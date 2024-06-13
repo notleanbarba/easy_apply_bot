@@ -123,73 +123,75 @@ def ApplyToJob(offers: Iterator[WebElement]):
 
 
 if __name__ == "__main__":
-    try:
-        with open("config.toml", "rb") as file:
-            config = tomllib.load(file)
+    with open("config.toml", "rb") as file:
+        config = tomllib.load(file)
 
-        ### Open Google chrome instance
-        ###
-        options = Options()
-        options.add_argument("user-data-dir=/tmp/easy_apply_bot")
+    ### Open Google chrome instance
+    ###
+    options = Options()
+    options.add_argument("user-data-dir=/tmp/easy_apply_bot")
 
-        browser = webdriver.Chrome(options=options)
-        ###
-        ###
+    browser = webdriver.Chrome(options=options)
+    ###
+    ###
 
-        ### Go to Job Offers page
-        ###
-        if config["use_top_applicant"]:
-            URL = "https://www.linkedin.com/jobs/collections/recommended/?discover=recommended&discoveryOrigin=JOBS_HOME_JYMBII"
+    ### Go to Job Offers page
+    ###
+    BASE_URL = "https://www.linkedin.com/jobs/search"
 
-        browser.get(URL)
+    browser.get("https://www.linkedin.com/jobs")
 
-        if re.search("Login", browser.title):
-            user_box = browser.find_element(value="username")
-            pass_box = browser.find_element(value="password")
+    if re.search("Login", browser.title):
+        user_box = browser.find_element(value="username")
+        pass_box = browser.find_element(value="password")
 
-            user_box.send_keys(config["user"])
-            pass_box.send_keys(config["password"], Keys.RETURN)
+        user_box.send_keys(config["user"])
+        pass_box.send_keys(config["password"], Keys.RETURN)
 
-            if browser.title == "Security Verification | LinkedIn":
-                print("Captcha wall. Please, follow the instructions to continue.")
-                while browser.title == "Security Verification | LinkedIn":
-                    time.sleep(5)
+        if browser.title == "Security Verification | LinkedIn":
+            print("Captcha wall. Please, follow the instructions to continue.")
+            while browser.title == "Security Verification | LinkedIn":
+                time.sleep(5)
 
-            if browser.title == "LinkedIn App Challenge":
-                print("2FA wall. Please, follow the instructions to continue.")
-                while browser.title == "LinkedIn App Challenge":
-                    time.sleep(5)
+        if browser.title == "LinkedIn App Challenge":
+            print("2FA wall. Please, follow the instructions to continue.")
+            while browser.title == "LinkedIn App Challenge":
+                time.sleep(5)
 
+    if config["use_top_applicant"]:
         BASE_URL = "https://www.linkedin.com/jobs/collections/recommended/"
-        assert browser.current_url.find(BASE_URL) != -1
+        top_offers = browser.find_element(By.CSS_SELECTOR, "[data-view-name='jobs-feed-discovery-module']")
+        if re.search("Top job picks for you", top_offers.text):
+            top_offers.find_element(By.CLASS_NAME, "discovery-templates-jobs-home-vertical-list__footer").click()
+            time.sleep(1)
+
+    assert browser.current_url.find(BASE_URL) != -1
+    ###
+    ###
+
+    while True:
+        ### Scan page for Easy Apply offers
         ###
-        ###
+        offers_list_height = 0
+        browser.execute_script("document.getElementsByClassName('jobs-search-results-list').item(0).scrollTop = 10000")
 
-        while True:
-            ### Scan page for Easy Apply offers
-            ###
-            offers_list_height = 0
-            browser.execute_script(
-                "document.getElementsByClassName('jobs-search-results-list').item(0).scrollTop = 10000"
-            )
+        offers_li = browser.find_element(By.CLASS_NAME, "scaffold-layout__list-container").find_elements(
+            By.XPATH, "./*"
+        )
 
-            offers_li = browser.find_element(By.CLASS_NAME, "scaffold-layout__list-container").find_elements(
-                By.XPATH, "./*"
-            )
+        offers_w_EA = filter(
+            lambda offer: re.search("Easy Apply", offer.text),
+            offers_li,
+        )
 
-            offers_w_EA = filter(
-                lambda offer: re.search("Easy Apply", offer.text),
-                offers_li,
-            )
+        ApplyToJob(offers_w_EA)
 
-            ApplyToJob(offers_w_EA)
-
-            pages = browser.find_elements(By.CLASS_NAME, "artdeco-pagination__indicator")
-            for i, page in enumerate(pages):
-                if "active" in page.get_property("classList"):
-                    pages[i + 1].click()
-                    time.sleep(5)
-                    break
+        pages = browser.find_elements(By.CLASS_NAME, "artdeco-pagination__indicator")
+        for i, page in enumerate(pages):
+            if "active" in page.get_property("classList"):
+                pages[i + 1].click()
+                time.sleep(3)
+                break
 
     except BaseException:
         import sys
