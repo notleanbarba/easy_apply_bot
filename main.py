@@ -11,7 +11,7 @@ import time
 from typing import Iterator
 
 
-def IteratePages(resume):
+def IteratePages(resume, cv_applied=False):
     ## Bypass job safety
     try:
         if browser.find_element(By.CLASS_NAME, "artdeco-modal__header").text == "Job search safety reminder":
@@ -28,27 +28,29 @@ def IteratePages(resume):
         pass
 
     ### Check if resumes is asked
-    try:
-        time.sleep(1)
-        if apply_modal.find_element(
-            By.CSS_SELECTOR,
-            "[aria-label='Upload resume button. Only, DOC, DOCX, PDF formats are supported. Max file size is (2 MB).']",
-        ):
-            saved_resumes = apply_modal.find_element(By.CLASS_NAME, "jobs-easy-apply-content")
-            for saved in saved_resumes.find_elements(By.CLASS_NAME, "ui-attachment--pdf"):
-                if re.search("resume %s" % resume, saved.text):
-                    saved.click()
-                    time.sleep(1)
-                    break
-    except NoSuchElementException:
-        pass
+    if not cv_applied:
+        try:
+            time.sleep(2)
+            if apply_modal.find_element(
+                By.CSS_SELECTOR,
+                "[aria-label='Upload resume button. Only, DOC, DOCX, PDF formats are supported. Max file size is (2 MB).']",
+            ):
+                for saved in apply_modal.find_elements(By.CLASS_NAME, "ui-attachment--pdf"):
+                    if re.search("resume %s" % resume, saved.text) is not None:
+                        saved.click()
+                        saved.click()
+                        saved.click()
+                        cv_applied = True
+                        break
+        except NoSuchElementException:
+            pass
 
     ### Check for unanswer
     try:
         for question in apply_modal.find_elements(By.CLASS_NAME, "artdeco-text-input--container"):
             if question.find_element(By.TAG_NAME, "input").get_attribute("value") == "":
                 print("\033[sQuestion: " + question.find_element(By.TAG_NAME, "label").text)
-                ans = input("Answer: ")
+                ans = input("\aAnswer: ")
                 print("\033[2F\033[J\033[F")
                 question.find_element(By.TAG_NAME, "input").send_keys(ans)
     except NoSuchElementException:
@@ -69,7 +71,7 @@ def IteratePages(resume):
                 == current_progress
             ):
                 print("Required field to complete. Follow instructions in browser")
-                input("Press to continue execution...")
+                input("\aPress to continue execution...")
                 print("\033[2F\033[J\033[F")
                 apply_modal.find_element(By.CSS_SELECTOR, "[aria-label='Continue to next step']").click()
         except NoSuchElementException:
@@ -81,11 +83,11 @@ def IteratePages(resume):
                 == current_progress
             ):
                 print("Required field to complete. Follow instructions in browser")
-                input("Press to continue execution...")
+                input("\aPress to continue execution...")
                 print("\033[2F\033[J\033[F")
                 apply_modal.find_element(By.CSS_SELECTOR, "[aria-label='Review your application']").click()
         finally:
-            IteratePages(resume)
+            IteratePages(resume, cv_applied=cv_applied)
 
 
 def ApplyToJob(offers: Iterator[WebElement]):
@@ -103,6 +105,8 @@ def ApplyToJob(offers: Iterator[WebElement]):
 
         title = browser.find_element(By.CLASS_NAME, "job-details-jobs-unified-top-card__job-title").text
         company = browser.find_element(By.CLASS_NAME, "job-details-jobs-unified-top-card__company-name").text
+        if company in config["blacklist"]:
+            return
         location = (
             browser.find_element(By.CLASS_NAME, "job-details-jobs-unified-top-card__primary-description-container")
             .find_elements(By.TAG_NAME, "span")[0]
@@ -165,6 +169,7 @@ if __name__ == "__main__":
             top_offers.find_element(By.CLASS_NAME, "discovery-templates-jobs-home-vertical-list__footer").click()
             time.sleep(1)
 
+    time.sleep(3)
     assert browser.current_url.find(BASE_URL) != -1
     ###
     ###
@@ -192,14 +197,3 @@ if __name__ == "__main__":
                 pages[i + 1].click()
                 time.sleep(3)
                 break
-
-    except BaseException:
-        import sys
-
-        print(sys.exc_info()[0])
-        import traceback
-
-        print(traceback.format_exc())
-    finally:
-        print("Press Enter to continue ...")
-        input()
