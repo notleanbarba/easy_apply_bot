@@ -1,0 +1,8 @@
+use_top_applicant = true # If true, it will look for jobs that fits for you acording to LinkedIn. You need a LinkedIn Premium subscription.
+user = Your user
+password = Your password
+
+# A list of resumes in different languages that you want to use. They have to be already loaded in LinkedIn and the bot will match the full name of the file.
+[resumes]
+en = Resume in english
+es = Resume in spanish
