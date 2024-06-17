@@ -16,3 +16,10 @@ password = Your password
 jobs_to_apply = Query that you want to use
 city = City where you want to work
 intended_salary = Intended salary
+
+[zonajobs]
+user = Your user
+password = Your password
+jobs_to_apply = Query that you want to use
+city = City where you want to work
+intended_salary = Intended salary
