@@ -3,6 +3,7 @@ use_top_applicant = true # If true, it will look for jobs that fits for you acor
 user = Your user
 password = Your password
 blacklist = [Company1, Company2]
+jobs_to_apply = []
 
 # A list of resumes in different languages that you want to use. They have to be already loaded in LinkedIn and the bot will match the full name of the file.
 [linkedin.resumes]
