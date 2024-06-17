@@ -1,26 +1,18 @@
 import tomllib
 import time
-from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
+from selenium.webdriver.chrome.webdriver import WebDriver
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
-if __name__ == "__main__":
+
+def main(browser: WebDriver):
     with open("config.toml", "rb") as file:
         config = tomllib.load(file)["bumeran"]
 
-    ### Open Google chrome instance
-    ###
-    options = Options()
-    options.add_argument("user-data-dir=/tmp/easy_apply_bot")
-
-    browser = webdriver.Chrome(options=options)
-    wait = WebDriverWait(browser, 10)
-    ###
-    ###
+    wait = WebDriverWait(browser, 15)
 
     ### Go to Job Offers page
     ###
@@ -132,7 +124,4 @@ Applying to jobs in Bumeran\n\
         wait.until(EC.title_contains("| Bumeran"))
         wait.until(EC.presence_of_element_located((By.ID, "listado-avisos")))
         wait.until(EC.presence_of_element_located((By.CLASS_NAME, "sc-cBXKeB")))
-
-    print("No more jobs to apply. Jobs applied=%d" % counter)
-    input("Press any key to close")
-    browser.quit()
+    return counter
