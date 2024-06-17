@@ -1,3 +1,8 @@
+[activate]
+linkedin = true
+bumeran = true
+zonajobs = true
+
 [linkedin]
 use_top_applicant = true # If true, it will look for jobs that fits for you acording to LinkedIn. You need a LinkedIn Premium subscription.
 user = Your user

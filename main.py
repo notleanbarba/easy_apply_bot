@@ -1,3 +1,4 @@
+import tomllib
 import linkedin
 import bumeran
 import zonajobs
@@ -12,8 +13,17 @@ if __name__ == "__main__":
 
     browser = webdriver.Chrome(options=options)
 
-    counter_linkedin = linkedin.main(browser)
-    counter_bumeran = bumeran.main(browser)
+    with open("config.toml", "rb") as file:
+        activate = tomllib.load(file)["activate"]
+
+    counter_linkedin = 0
+    counter_bumeran = 0
+    counter_zonajobs = 0
+
+    if activate["linkedin"]:
+        counter_linkedin = linkedin.main(browser)
+    if activate["bumeran"]:
+        counter_bumeran = bumeran.main(browser)
     if activate["zonajobs"]:
         counter_zonajobs = zonajobs.main(browser)
     print(
